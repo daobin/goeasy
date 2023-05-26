@@ -1,7 +1,7 @@
 package goeasy
 
 import (
-	"fmt"
+	"github.com/daobin/goeasy/internal"
 	"net/http"
 )
 
@@ -19,6 +19,9 @@ func New() *Engine {
 		},
 	}
 	easy.router.engine = easy
+	easy.ctxPool.New = func() any {
+		return easy.allocateContext()
+	}
 
 	return easy
 }
@@ -31,7 +34,7 @@ func Start(addr string) {
 
 	err := http.ListenAndServe(addr, easy)
 	if err != nil {
-		panic(fmt.Sprintf("启动框架引擎失败：%s", err.Error()))
+		panic(internal.MergeString("启动框架引擎失败：", err.Error()))
 	}
 }
 
