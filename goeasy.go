@@ -15,7 +15,10 @@ func New() *Engine {
 
 	easy = &Engine{
 		router: router{
-			basePath: "/",
+			basePath:    "/",
+			handlers:    nil,
+			engine:      nil,
+			isEngineNew: true,
 		},
 	}
 	easy.router.engine = easy

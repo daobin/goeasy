@@ -1,7 +1,6 @@
 package goeasy
 
 import (
-	"github.com/daobin/goeasy/internal"
 	"net/http"
 	"sync"
 )
@@ -13,18 +12,17 @@ type Engine struct {
 	trees   nodeTrees
 }
 
-func (receiver *Engine) allocateContext() *context {
+func (e *Engine) allocateContext() *context {
 	return &context{}
 }
 
-func (receiver *Engine) addRoute(httpMethod, absolutePath string, handlers []handlerFunc) {
-	root := receiver.trees.get(httpMethod)
+func (e *Engine) addRoute(httpMethod, absolutePath string, handlers []handlerFunc) {
+	root := e.trees.get(httpMethod)
 	if root == nil {
 		root = &node{
 			fullPath: "/",
-			nType:    internal.NodeTypeRoot,
 		}
-		receiver.trees = append(receiver.trees, nodeTree{
+		e.trees = append(e.trees, nodeTree{
 			method: httpMethod,
 			root:   root,
 		})
@@ -33,7 +31,7 @@ func (receiver *Engine) addRoute(httpMethod, absolutePath string, handlers []han
 	root.addRoute(absolutePath, handlers)
 }
 
-func (receiver *Engine) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
+func (e *Engine) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
 	//TODO implement me
 	panic("implement me")
 }
