@@ -40,18 +40,21 @@ func (r *router) DELETE(relativePath string, handlers ...handlerFunc) IRouter {
 	return r.handle(http.MethodDelete, relativePath, handlers)
 }
 
+// handle 路由节点添加处理
 func (r *router) handle(httpMethod, relativePath string, handlers []handlerFunc) IRouter {
 	absolutePath := r.calculateAbsolutePath(relativePath)
 	handlers = r.mergeHandlers(handlers)
-	r.engine.addRoute(httpMethod, absolutePath, handlers)
+	r.engine.addRouteNode(httpMethod, absolutePath, handlers)
 
 	return r.returnRouter()
 }
 
+// calculateAbsolutePath 返回完整的请求路径
 func (r *router) calculateAbsolutePath(relativePath string) string {
 	return internal.JoinPath(r.basePath, relativePath)
 }
 
+// mergeHandlers 合并多个处理函数
 func (r *router) mergeHandlers(handlers []handlerFunc) []handlerFunc {
 	finalSize := len(r.handlers) + len(handlers)
 	// todo 可以通过finalSize控制最大数量的handlers
@@ -63,6 +66,7 @@ func (r *router) mergeHandlers(handlers []handlerFunc) []handlerFunc {
 	return mergeHandlers
 }
 
+// returnRouter 返回请求路由
 func (r *router) returnRouter() IRouter {
 	if r.isEngineNew {
 		return r.engine
@@ -71,6 +75,7 @@ func (r *router) returnRouter() IRouter {
 	return r
 }
 
+// Group 返回新建路由组
 func (r *router) Group(relativePath string) *router {
 	return &router{
 		basePath:    r.calculateAbsolutePath(relativePath),

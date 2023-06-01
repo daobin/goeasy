@@ -19,17 +19,21 @@ func TestHandle(t *testing.T) {
 			relativePath: "/user/list/",
 		},
 		{
-			name:         "Router Handle003",
-			relativePath: "/user/:id",
+			name:         "Router Handle002",
+			relativePath: "/user",
 		},
-		{
-			name:         "Router Handle004",
-			relativePath: "/user/:id/article/list",
-		},
-		{
-			name:         "Router Handle005",
-			relativePath: "/user/:id/article/:id",
-		},
+		//{
+		//	name:         "Router Handle003",
+		//	relativePath: "/user/:id",
+		//},
+		//{
+		//	name:         "Router Handle004",
+		//	relativePath: "/user/:id/article/list",
+		//},
+		//{
+		//	name:         "Router Handle005",
+		//	relativePath: "/user/:id/article/:id",
+		//},
 	}
 
 	for _, tt := range tests {

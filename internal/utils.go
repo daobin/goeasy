@@ -5,6 +5,7 @@ import (
 	"strings"
 )
 
+// MinNumber 返回两个数值中最小值
 func MinNumber(first, second int) int {
 	if first < second {
 		return first
@@ -12,6 +13,7 @@ func MinNumber(first, second int) int {
 	return second
 }
 
+// CommonPrefixLongest 返回相同前缀最大长度
 func CommonPrefixLongest(first, second string) int {
 	longest := 0
 	max := MinNumber(len(first), len(second))
@@ -21,6 +23,7 @@ func CommonPrefixLongest(first, second string) int {
 	return longest
 }
 
+// MergeString 拼接字符串
 func MergeString(first string, others ...string) string {
 	if others == nil || len(others) == 0 {
 		return first
@@ -38,6 +41,7 @@ func MergeString(first string, others ...string) string {
 	return string(newBytes)
 }
 
+// JoinPath 拼接路径
 func JoinPath(firstPath, secondPath string) string {
 	firstPath = strings.Trim(firstPath, "/")
 	secondPath = strings.Trim(secondPath, "/")
@@ -49,7 +53,9 @@ func JoinPath(firstPath, secondPath string) string {
 	return MergeString("/", finalPath)
 }
 
+// FindPathWildcard 查找路径中的通配符
 func FindPathWildcard(pathStr string) (string, int, bool) {
+	// 按字符循环查找匹配
 	for start, char := range []byte(pathStr) {
 		if char != ':' && char != '*' {
 			continue
@@ -74,5 +80,6 @@ func FindPathWildcard(pathStr string) (string, int, bool) {
 		return pathStr[start:], start, valid
 	}
 
+	// 未找到返回 -1
 	return "", -1, false
 }

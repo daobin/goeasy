@@ -23,7 +23,7 @@ func New() *Engine {
 	}
 	easy.router.engine = easy
 	easy.ctxPool.New = func() any {
-		return easy.allocateContext()
+		return easy.newContext()
 	}
 
 	return easy
