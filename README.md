@@ -16,4 +16,4 @@ import "github.com/daobin/goeasy"
 
 ## 鸣谢
 
-goeasy 框架主要参考了gin框架的设计理念，在此特表感谢
+goeasy 框架主要参考了gin / httprouter的设计思想，在此特表感谢

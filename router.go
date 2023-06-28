@@ -3,9 +3,8 @@ package goeasy
 import (
 	"github.com/daobin/goeasy/internal"
 	"net/http"
+	"strings"
 )
-
-type handlerFunc func(c *context)
 
 type IRouter interface {
 	GET(string, ...handlerFunc) IRouter
@@ -16,7 +15,7 @@ type IRouter interface {
 
 type router struct {
 	basePath    string
-	handlers    []handlerFunc
+	handlers    handlerChain
 	engine      *Engine
 	isEngineNew bool
 }
@@ -41,7 +40,7 @@ func (r *router) DELETE(relativePath string, handlers ...handlerFunc) IRouter {
 }
 
 // handle 路由节点添加处理
-func (r *router) handle(httpMethod, relativePath string, handlers []handlerFunc) IRouter {
+func (r *router) handle(httpMethod, relativePath string, handlers handlerChain) IRouter {
 	absolutePath := r.calculateAbsolutePath(relativePath)
 	handlers = r.mergeHandlers(handlers)
 	r.engine.addRouteNode(httpMethod, absolutePath, handlers)
@@ -51,7 +50,8 @@ func (r *router) handle(httpMethod, relativePath string, handlers []handlerFunc)
 
 // calculateAbsolutePath 返回完整的请求路径
 func (r *router) calculateAbsolutePath(relativePath string) string {
-	return internal.JoinPath(r.basePath, relativePath)
+	// 确保路径小写
+	return strings.ToLower(internal.JoinPath(r.basePath, relativePath))
 }
 
 // mergeHandlers 合并多个处理函数

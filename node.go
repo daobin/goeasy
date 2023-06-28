@@ -1,135 +1,181 @@
 package goeasy
 
-import "github.com/daobin/goeasy/internal"
+import (
+	"github.com/daobin/goeasy/internal"
+)
+
+type handlerFunc func(c *context)
+
+type handlerChain []handlerFunc
+
+func (h handlerChain) Last() handlerFunc {
+	if length := len(h); length > 0 {
+		return h[length]
+	}
+
+	return nil
+}
 
 type node struct {
 	fullPath string
-	handlers []handlerFunc
+	path     string
+	indices  string
+	handlers handlerChain
 	nType    internal.NodeType
 	priority uint32
 	children []*node
 }
 
-// addRoute 添加路由节点
-func (n *node) addRoute(path string, handlers []handlerFunc) {
-	// 匹配新路径与当前路径的相同前缀最大长度
-	longest := internal.CommonPrefixLongest(path, n.fullPath)
+// addRouteNode 添加路由节点（注册路由）
+func (n *node) addRouteNode(fullPath string, handlers []handlerFunc) {
+	path := fullPath
+	n.priority++
 
-	// 新路径与当前路径一致
-	if longest == len(path) && longest == len(n.fullPath) {
-		if len(n.handlers) == 0 {
-			n.handlers = handlers
-		}
-
+	if n.nType == internal.NodeTypeRoot && len(n.handlers) == 0 {
+		n.insertWildChild(path, fullPath, handlers)
 		return
 	}
 
-	if len(path) < len(n.fullPath) {
-		child := node{
-			fullPath: n.fullPath,
-			handlers: n.handlers,
-			priority: n.priority + 1,
-			children: n.children,
-		}
+	parentFullPathIndex := 0
 
-		n.children = []*node{&child}
-		n.fullPath = path
-		n.handlers = handlers
-
-		return
-	}
-
-	//fullPath := path
-	//
-	//n.priority++
-	//if n.path == "" && len(n.children) == 0 {
-	//	n.insertWildChild(path, fullPath, handlers)
-	//	n.nType = internal.NodeTypeNormal
-	//	return
-	//}
-	//
-	//parentFullPathIndex := 0
-	//
-	//for {
-	//	// path 新传入的路径
-	//	// n.path 当前节点的路径
-	//	longest := internal.CommonPrefixLongest(path, n.path)
-	//
-	//	if longest < len(n.path) {
-	//		child := node{
-	//			path:     n.path[longest:],
-	//			fullPath: n.fullPath,
-	//			handlers: n.handlers,
-	//			priority: n.priority - 1,
-	//			children: n.children,
-	//		}
-	//
-	//		n.children = []*node{&child}
-	//		n.path = path[:longest]
-	//		n.fullPath = fullPath[:parentFullPathIndex+longest]
-	//		n.handlers = handlers
-	//	}
-	//
-	//	if longest < len(path) {
-	//		path = path[longest:]
-	//		char := path[0]
-	//
-	//		if n.nType == internal.NodeTypeParam && char == '/' && len(n.children) == 1 {
-	//			parentFullPathIndex += len(n.path)
-	//
-	//			n = n.children[0]
-	//			n.priority++
-	//			continue
-	//		}
-	//	}
-	//}
-
-}
-
-func (n *node) insertWildChild(path, fullPath string, handlers []handlerFunc) {
+walk:
 	for {
-		wildcard, idx, valid := internal.FindPathWildcard(path)
-		if idx < 0 {
-			break
-		}
+		// 公共前缀最大长度
+		longest := internal.CommonPrefixLongest(path, n.path)
 
-		if !valid {
-			panic(internal.MergeString("路径通配符错误：", fullPath, " >> ", wildcard))
-		}
-
-		if wildcard[0] == ':' {
-			if idx > 0 {
-				//n.path = path[:idx]
-				path = path[idx:]
+		// 分裂当前节点，将分裂的后半部分添加为子节点
+		if longest < len(n.path) {
+			newNode := &node{
+				fullPath: n.fullPath,
+				path:     n.path[longest:],
+				indices:  n.indices,
+				handlers: n.handlers,
+				nType:    internal.NodeTypeNormal,
+				priority: n.priority - 1,
+				children: n.children,
 			}
 
-			child := node{
-				//path:     wildcard,
+			n.fullPath = fullPath[:parentFullPathIndex+longest]
+			n.indices = string(n.path[longest])
+			n.path = path[:longest]
+			n.handlers = nil
+			n.children = []*node{newNode}
+		}
+
+		// 添加新节点
+		if longest < len(path) {
+			path = path[longest:]
+			pathChar := path[0]
+
+			// 校验path是否存在公共前缀的子节点
+			for i, max := 0, len(n.indices); i < max; i++ {
+				if pathChar == n.indices[i] {
+					parentFullPathIndex += len(n.path)
+					i = n.incrementChildPriority(i)
+					n = n.children[i]
+					continue walk
+				}
+			}
+
+			newNode := &node{
 				fullPath: fullPath,
-				nType:    internal.NodeTypeParam,
+				nType:    internal.NodeTypeNormal,
 			}
+			n.addChild(newNode)
 
-			n.children = append(n.children, &child)
-			n = &child
-			n.priority++
+			// 优化子节点排序
+			n.indices += string([]byte{pathChar})
+			n.incrementChildPriority(len(n.indices) - 1)
 
-			if len(wildcard) < len(path) {
-				path = path[len(wildcard):]
-				child = node{fullPath: fullPath, priority: 1}
-				n.children = append(n.children, &child)
-				n = &child
-				continue
-			}
-
-			n.handlers = handlers
+			n = newNode
+			n.insertWildChild(path, fullPath, handlers)
 			return
 		}
 
+		n.fullPath = fullPath
+		n.handlers = handlers
+		return
+	}
+}
+
+// insertWildChild 插入通配符参数子节点
+func (n *node) insertWildChild(path, fullPath string, handlers []handlerFunc) {
+	//for {
+	//	wildcard, idx, valid := internal.FindPathWildcard(path)
+	//	if idx < 0 {
+	//		break
+	//	}
+	//
+	//	if !valid {
+	//		panic(internal.MergeString("路径通配符错误：", fullPath, " >> ", wildcard))
+	//	}
+	//
+	//	if wildcard[0] == ':' {
+	//		if idx > 0 {
+	//			path = path[idx:]
+	//		}
+	//
+	//		newNode := node{
+	//			fullPath: fullPath,
+	//			nType:    internal.NodeTypeParam,
+	//		}
+	//
+	//		n.children = append(n.children, &newNode)
+	//		n = &newNode
+	//		n.priority++
+	//
+	//		if len(wildcard) < len(path) {
+	//			path = path[len(wildcard):]
+	//			newNode = node{fullPath: fullPath, priority: 1}
+	//			n.children = append(n.children, &newNode)
+	//			n = &newNode
+	//			continue
+	//		}
+	//
+	//		n.handlers = handlers
+	//		return
+	//	}
+	//}
+
+	// 没有找到通配符时处理
+	n.path = path
+	n.fullPath = fullPath
+	n.handlers = handlers
+}
+
+// addChild 添加子节点
+func (n *node) addChild(child *node) {
+	if n.isWildcard() && len(n.children) > 0 {
+		wildcardChild := n.children[len(n.children)-1]
+		n.children = append(n.children[:len(n.children)-1], child, wildcardChild)
+		return
 	}
 
-	//n.path = path
-	//n.fullPath = fullPath
-	//n.handlers = handlers
+	n.children = append(n.children, child)
+}
+
+// isWildcard 是否为通配符参数节点
+func (n *node) isWildcard() bool {
+	return n.nType == internal.NodeTypeParam || n.nType == internal.NodeTypeCatchAll
+}
+
+// incrementChildPriority 提升子节点priority，并根据子节点priority重排子节点顺序
+func (n *node) incrementChildPriority(index int) int {
+	n.children[index].priority++
+	priority := n.children[index].priority
+
+	newIndex := index
+	// 重排子节点顺序
+	for ; newIndex > 0 && n.children[newIndex-1].priority < priority; newIndex-- {
+		n.children[newIndex-1], n.children[newIndex] = n.children[newIndex], n.children[newIndex-1]
+	}
+
+	// 根据子节点顺序重组节点indices
+	if newIndex != index {
+		n.indices = n.indices[:newIndex] + n.indices[index:index+1] + n.indices[newIndex:index] + n.indices[index+1:]
+	}
+
+	return newIndex
 }
 
 type nodeTree struct {

@@ -16,8 +16,6 @@ func New() *Engine {
 	easy = &Engine{
 		router: router{
 			basePath:    "/",
-			handlers:    nil,
-			engine:      nil,
 			isEngineNew: true,
 		},
 	}
@@ -30,12 +28,28 @@ func New() *Engine {
 }
 
 // Start 启动框架引擎
-func Start(addr string) {
+func Start(port string) {
 	if easy == nil {
 		panic("启动框架引擎失败：框架引擎尚未创建")
 	}
 
-	err := http.ListenAndServe(addr, easy)
+	srv := &http.Server{
+		Addr:              ":" + port,
+		Handler:           easy,
+		TLSConfig:         nil,
+		ReadTimeout:       0,
+		ReadHeaderTimeout: 0,
+		WriteTimeout:      0,
+		IdleTimeout:       0,
+		MaxHeaderBytes:    0,
+		TLSNextProto:      nil,
+		ConnState:         nil,
+		ErrorLog:          nil,
+		BaseContext:       nil,
+		ConnContext:       nil,
+	}
+
+	err := srv.ListenAndServe()
 	if err != nil {
 		panic(internal.MergeString("启动框架引擎失败：", err.Error()))
 	}
@@ -47,4 +61,5 @@ func Stop() {
 		return
 	}
 
+	// todo 待完善
 }
