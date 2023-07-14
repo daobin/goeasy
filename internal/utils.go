@@ -65,18 +65,12 @@ func FindPathWildcard(pathStr string) (string, int, bool) {
 		for end, char := range []byte(pathStr[start+1:]) {
 			switch char {
 			case '/':
-				if len(pathStr[start:start+1+end]) == 1 {
-					valid = false
-				}
 				return pathStr[start : start+1+end], start, valid
 			case ':', '*':
 				valid = false
 			}
 		}
 
-		if len(pathStr[start:]) == 1 {
-			valid = false
-		}
 		return pathStr[start:], start, valid
 	}
 

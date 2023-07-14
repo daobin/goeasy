@@ -1,8 +1,14 @@
 package goeasy
 
 import (
+	context2 "context"
 	"github.com/daobin/goeasy/internal"
+	"log"
 	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 )
 
 var easy *Engine
@@ -34,32 +40,28 @@ func Start(port string) {
 	}
 
 	srv := &http.Server{
-		Addr:              ":" + port,
-		Handler:           easy,
-		TLSConfig:         nil,
-		ReadTimeout:       0,
-		ReadHeaderTimeout: 0,
-		WriteTimeout:      0,
-		IdleTimeout:       0,
-		MaxHeaderBytes:    0,
-		TLSNextProto:      nil,
-		ConnState:         nil,
-		ErrorLog:          nil,
-		BaseContext:       nil,
-		ConnContext:       nil,
+		Addr:    ":" + port,
+		Handler: easy,
 	}
 
 	err := srv.ListenAndServe()
 	if err != nil {
 		panic(internal.MergeString("启动框架引擎失败：", err.Error()))
 	}
-}
 
-// Stop 停止框架引擎
-func Stop() {
-	if easy == nil {
-		return
+	// 等待中断信号以优雅地关闭服务器（设置5秒的超时时间）
+	quit := make(chan os.Signal)
+	signal.Notify(quit, syscall.SIGHUP, syscall.SIGINT, syscall.SIGQUIT, syscall.SIGTERM)
+	<-quit
+	log.Println("服务开始关闭")
+
+	// todo 此处可以做一些关闭前的相关工作，如：资源释放
+
+	ctx, cancel := context2.WithTimeout(context2.Background(), time.Second*5)
+	defer cancel()
+
+	if err := srv.Shutdown(ctx); err != nil {
+		panic(internal.MergeString("服务关闭失败：", err.Error()))
 	}
-
-	// todo 待完善
+	log.Println("服务结束关闭")
 }
