@@ -2,9 +2,10 @@ package goeasy
 
 import (
 	"github.com/daobin/goeasy/internal"
+	"strings"
 )
 
-type handlerFunc func(c *context)
+type handlerFunc func(c *Context)
 
 type handlerChain []handlerFunc
 
@@ -19,17 +20,37 @@ func (h handlerChain) Last() handlerFunc {
 type node struct {
 	fullPath string
 	path     string
-	indices  string
 	handlers handlerChain
 	nType    internal.NodeType
 	priority uint32
-	children []*node
-	isEnd    bool
+	children map[string]*node
 }
 
 // addRouteNode 添加路由节点（注册路由）
 func (n *node) addRouteNode(fullPath string, handlers []handlerFunc) {
+	if fullPath == "/" {
+		n.handlers = handlers
+		return
+	}
 
+	segments := strings.Split(fullPath, "/")
+	for _, segment := range segments {
+		if segment == "" {
+			continue
+		}
+
+		if _, ok := n.children[segment]; !ok {
+			n.children[segment] = &node{
+				fullPath: internal.JoinPath(n.fullPath, segment),
+				path:     segment,
+				nType:    internal.NodeTypeNormal,
+				children: map[string]*node{},
+			}
+		}
+		n = n.children[segment]
+	}
+
+	n.handlers = handlers
 }
 
 type nodeTree struct {

@@ -3,6 +3,7 @@ package goeasy
 import (
 	"github.com/daobin/goeasy/internal"
 	"net/http"
+	"strings"
 	"sync"
 )
 
@@ -14,8 +15,8 @@ type Engine struct {
 }
 
 // newContext 新建上下文
-func (e *Engine) newContext() *context {
-	return &context{}
+func (e *Engine) newContext() *Context {
+	return &Context{}
 }
 
 // addRouteNode 添加路由节点（注册路由）
@@ -24,8 +25,8 @@ func (e *Engine) addRouteNode(httpMethod, absolutePath string, handlers []handle
 	if root == nil {
 		root = &node{
 			fullPath: "/",
-			path:     "/",
 			nType:    internal.NodeTypeRoot,
+			children: map[string]*node{},
 		}
 		e.trees = append(e.trees, nodeTree{
 			method: httpMethod,
@@ -37,9 +38,49 @@ func (e *Engine) addRouteNode(httpMethod, absolutePath string, handlers []handle
 }
 
 // ServeHTTP 实现HTTP服务（监听路由）
-func (e *Engine) ServeHTTP(writer http.ResponseWriter, request *http.Request) {
-	//TODO implement me
-	panic("implement me")
+func (e *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	c := e.ctxPool.Get().(*Context)
+	c.Writer = w
+	c.Request = req
+	c.reset()
+
+	e.handleHttpRequest(c)
+	e.ctxPool.Put(c)
+}
+
+func (e *Engine) handleHttpRequest(c *Context) {
+	w := c.Writer
+	req := c.Request
+
+	segments := strings.Split(req.URL.Path, "/")
+
+	n := e.trees.get(req.Method)
+	if n == nil {
+		http.NotFound(w, req)
+		return
+	}
+
+	for _, segment := range segments {
+		if segment == "" {
+			continue
+		}
+
+		child, ok := n.children[segment]
+		if !ok {
+			http.NotFound(w, req)
+			return
+		}
+
+		n = child
+	}
+
+	if len(n.handlers) == 0 {
+		http.NotFound(w, req)
+		return
+	}
+
+	c.handlers = n.handlers
+	c.Next()
 }
 
 // 校验是否实现相关接口

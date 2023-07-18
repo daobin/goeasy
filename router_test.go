@@ -46,7 +46,7 @@ func TestHandle(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := New().GET(tt.fullPath, func(c *context) {})
+			got := New().GET(tt.fullPath, func(c *Context) {})
 			fmt.Printf("%s == %#v", tt.name, got)
 		})
 	}

@@ -3,10 +3,10 @@ package goeasy
 import (
 	"github.com/daobin/goeasy/internal"
 	"net/http"
-	"strings"
 )
 
 type IRouter interface {
+	Use(...handlerFunc) IRouter
 	GET(string, ...handlerFunc) IRouter
 	POST(string, ...handlerFunc) IRouter
 	PUT(string, ...handlerFunc) IRouter
@@ -22,6 +22,11 @@ type router struct {
 
 // 校验是否实现相关接口
 var _ IRouter = (*router)(nil)
+
+func (r *router) Use(middleware ...handlerFunc) IRouter {
+	r.handlers = append(r.handlers, middleware...)
+	return r.returnRouter()
+}
 
 func (r *router) GET(relativePath string, handlers ...handlerFunc) IRouter {
 	return r.handle(http.MethodGet, relativePath, handlers)
@@ -50,8 +55,7 @@ func (r *router) handle(httpMethod, relativePath string, handlers handlerChain) 
 
 // calculateAbsolutePath 返回完整的请求路径
 func (r *router) calculateAbsolutePath(relativePath string) string {
-	// 确保路径小写
-	return strings.ToLower(internal.JoinPath(r.basePath, relativePath))
+	return internal.JoinPath(r.basePath, relativePath)
 }
 
 // mergeHandlers 合并多个处理函数

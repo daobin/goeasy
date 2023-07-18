@@ -34,13 +34,13 @@ func New() *Engine {
 }
 
 // Start 启动框架引擎
-func Start(port string) {
+func Start(addr string) {
 	if easy == nil {
 		panic("启动框架引擎失败：框架引擎尚未创建")
 	}
 
 	srv := &http.Server{
-		Addr:    ":" + port,
+		Addr:    addr,
 		Handler: easy,
 	}
 

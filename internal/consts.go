@@ -8,3 +8,5 @@ const (
 	NodeTypeParam                    // : 参数路由节点
 	NodeTypeCatchAll                 // * 参数路由节点
 )
+
+const AbortHandlersIndex = -100

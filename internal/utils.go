@@ -41,16 +41,16 @@ func MergeString(first string, others ...string) string {
 	return string(newBytes)
 }
 
-// JoinPath 拼接路径
+// JoinPath 拼接路径，统一返回小写
 func JoinPath(firstPath, secondPath string) string {
 	firstPath = strings.Trim(firstPath, "/")
 	secondPath = strings.Trim(secondPath, "/")
 	if secondPath == "" {
-		return MergeString("/", firstPath)
+		return strings.ToLower(MergeString("/", firstPath))
 	}
 
 	finalPath := path.Join(firstPath, secondPath)
-	return MergeString("/", finalPath)
+	return strings.ToLower(MergeString("/", finalPath))
 }
 
 // FindPathWildcard 查找路径中的通配符
