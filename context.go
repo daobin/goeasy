@@ -33,8 +33,8 @@ func (c *Context) Next() {
 }
 
 func (c *Context) Json(code int, data any) {
-	c.Writer.WriteHeader(code)
 	c.Writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+	c.Writer.WriteHeader(code)
 
 	jsonBytes, _ := json.Marshal(data)
 	_, _ = c.Writer.Write(jsonBytes)
