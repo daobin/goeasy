@@ -1,8 +1,9 @@
 package goeasy
 
 import (
-	"encoding/json"
 	"github.com/daobin/goeasy/internal"
+	"github.com/daobin/goeasy/internal/binder"
+	"github.com/daobin/goeasy/internal/render"
 	"net/http"
 )
 
@@ -32,10 +33,22 @@ func (c *Context) Next() {
 	}
 }
 
-func (c *Context) Json(code int, data any) {
-	c.Writer.Header().Set("Content-Type", "application/json; charset=utf-8")
-	c.Writer.WriteHeader(code)
+func (c *Context) render(code int, r render.IRender) {
+	r.Render(code, c.Writer)
+}
 
-	jsonBytes, _ := json.Marshal(data)
-	_, _ = c.Writer.Write(jsonBytes)
+func (c *Context) Json(code int, data any) {
+	c.render(code, &render.Json{Data: data})
+}
+
+func (c *Context) bindWith(target any, b binder.IBinder) error {
+	return b.Bind(target, c.Request)
+}
+
+func (c *Context) BindJson(target any) error {
+	return c.bindWith(target, &binder.Json{})
+}
+
+func (c *Context) BindQuery(target any) error {
+	return c.bindWith(target, &binder.Query{})
 }

@@ -6,11 +6,11 @@ import (
 )
 
 type IRouter interface {
-	Use(...handlerFunc) IRouter
-	GET(string, ...handlerFunc) IRouter
-	POST(string, ...handlerFunc) IRouter
-	PUT(string, ...handlerFunc) IRouter
-	DELETE(string, ...handlerFunc) IRouter
+	Use(middlewares ...handlerFunc) IRouter
+	GET(relativePath string, handlers ...handlerFunc) IRouter
+	POST(relativePath string, handlers ...handlerFunc) IRouter
+	PUT(relativePath string, handlers ...handlerFunc) IRouter
+	DELETE(relativePath string, handlers ...handlerFunc) IRouter
 }
 
 type router struct {
@@ -23,8 +23,8 @@ type router struct {
 // 校验是否实现相关接口
 var _ IRouter = (*router)(nil)
 
-func (r *router) Use(middleware ...handlerFunc) IRouter {
-	r.handlers = append(r.handlers, middleware...)
+func (r *router) Use(middlewares ...handlerFunc) IRouter {
+	r.handlers = append(r.handlers, middlewares...)
 	return r.returnRouter()
 }
 
