@@ -11,6 +11,8 @@ import (
 	"time"
 )
 
+type H map[string]any
+
 var easy *Engine
 
 // New 新建框架引擎

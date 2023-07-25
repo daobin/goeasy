@@ -9,4 +9,4 @@ const (
 	NodeTypeCatchAll                 // * 参数路由节点
 )
 
-const AbortHandlersIndex = -100
+const AbortHandlersIndex = 100

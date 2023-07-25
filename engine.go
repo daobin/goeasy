@@ -49,14 +49,12 @@ func (e *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 }
 
 func (e *Engine) handleHttpRequest(c *Context) {
-	w := c.Writer
 	req := c.Request
-
 	segments := strings.Split(req.URL.Path, "/")
 
 	n := e.trees.get(req.Method)
 	if n == nil {
-		http.NotFound(w, req)
+		c.Json(http.StatusNotFound, H{"status": http.StatusNotFound, "msg": "请求资源不存在"})
 		return
 	}
 
@@ -67,7 +65,7 @@ func (e *Engine) handleHttpRequest(c *Context) {
 
 		child, ok := n.children[segment]
 		if !ok {
-			http.NotFound(w, req)
+			c.Json(http.StatusNotFound, H{"status": http.StatusNotFound, "msg": "请求资源不存在"})
 			return
 		}
 
@@ -75,7 +73,7 @@ func (e *Engine) handleHttpRequest(c *Context) {
 	}
 
 	if len(n.handlers) == 0 {
-		http.NotFound(w, req)
+		c.Json(http.StatusNotFound, H{"status": http.StatusNotFound, "msg": "请求资源不存在"})
 		return
 	}
 

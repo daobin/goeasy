@@ -26,11 +26,6 @@ func (c *Context) Abort() {
 
 // Next 执行下一个handler
 func (c *Context) Next() {
-	// 已中止
-	if c.handlersIndex == internal.AbortHandlersIndex {
-		return
-	}
-
 	c.handlersIndex++
 	handlerLen := len(c.handlers)
 
