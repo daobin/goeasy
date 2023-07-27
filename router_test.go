@@ -10,37 +10,29 @@ func TestHandle(t *testing.T) {
 		name     string
 		fullPath string
 	}{
-		//{
-		//	name:     "Router Root",
-		//	fullPath: "/",
-		//},
-		//{
-		//	name:     "Router User List",
-		//	fullPath: "/user/list/",
-		//},
-		//{
-		//	name:     "Router User Length",
-		//	fullPath: "/user/length",
-		//},
 		{
-			name:     "Router User Info",
-			fullPath: "/user",
-		},
-		//{
-		//	name:     "Router Order List",
-		//	fullPath: "/order/list",
-		//},
-		{
-			name:     "Router Handle003",
-			fullPath: "/user/:id",
+			name:     "/admin/user/info  [yes]",
+			fullPath: "/admin/user/info",
 		},
 		{
-			name:     "Router Handle004",
-			fullPath: "/user/:id/article/list",
+			name:     "/admin/user/:id  [yes]",
+			fullPath: "/admin/user/:id",
 		},
 		{
-			name:     "Router Handle005",
-			fullPath: "/user/:id/article/:id",
+			name:     "/admin/user/:name  [no]",
+			fullPath: "/admin/user/:name",
+		},
+		{
+			name:     "/admin/:object/:id  [yes]",
+			fullPath: "/admin/:object/:id",
+		},
+		{
+			name:     "/admin/:object/*key  [no]",
+			fullPath: "/admin/:object/*key",
+		},
+		{
+			name:     "/admin/:object/list  [no]",
+			fullPath: "/admin/:object/list",
 		},
 	}
 

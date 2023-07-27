@@ -12,6 +12,7 @@ type Context struct {
 	Request       *http.Request
 	handlers      handlerChain
 	handlersIndex int
+	Params        map[string]string
 }
 
 // reset 重置相关数据
@@ -58,4 +59,18 @@ func (c *Context) BindJson(target any) error {
 // BindQuery 绑定Query数据到指定对象
 func (c *Context) BindQuery(target any) error {
 	return c.bindWith(target, &binder.Query{})
+}
+
+// Query 获取Query参数
+func (c *Context) Query(key string) string {
+	return c.Request.URL.Query().Get(key)
+}
+
+// Param 获取路径参数
+func (c *Context) Param(key string) string {
+	if len(c.Params) == 0 {
+		return ""
+	}
+
+	return c.Params[key]
 }

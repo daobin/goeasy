@@ -1,7 +1,6 @@
 package goeasy
 
 import (
-	"github.com/daobin/goeasy/internal"
 	"net/http"
 	"strings"
 	"sync"
@@ -25,7 +24,6 @@ func (e *Engine) addRouteNode(httpMethod, absolutePath string, handlers []handle
 	if root == nil {
 		root = &node{
 			fullPath: "/",
-			nType:    internal.NodeTypeRoot,
 			children: map[string]*node{},
 		}
 		e.trees = append(e.trees, nodeTree{
@@ -58,18 +56,29 @@ func (e *Engine) handleHttpRequest(c *Context) {
 		return
 	}
 
-	for _, segment := range segments {
+	c.Params = map[string]string{}
+
+	for idx, segment := range segments {
 		if segment == "" {
 			continue
 		}
 
-		child, ok := n.children[segment]
-		if !ok {
+		// 精确匹配优先
+		child := n.getChildNode(segment)
+		if child == nil {
 			c.Json(http.StatusNotFound, H{"status": http.StatusNotFound, "msg": "请求资源不存在"})
 			return
 		}
-
 		n = child
+
+		// 参数赋值
+		if n.path[0] == ':' {
+			c.Params[n.path[1:]] = segment[1:]
+		} else if n.path[0] == '*' {
+			segments[idx] = segment[1:]
+			c.Params[n.path[1:]] = strings.Join(segments[idx:], "/")
+			break
+		}
 	}
 
 	if len(n.handlers) == 0 {
