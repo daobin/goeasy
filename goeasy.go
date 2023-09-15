@@ -7,30 +7,30 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 	"time"
 )
 
 type H map[string]any
 
+var once sync.Once
 var easy *Engine
 
 // New 新建框架引擎
 func New() *Engine {
-	if easy != nil {
-		return easy
-	}
-
-	easy = &Engine{
-		router: router{
-			basePath:    "/",
-			isEngineNew: true,
-		},
-	}
-	easy.router.engine = easy
-	easy.ctxPool.New = func() any {
-		return easy.newContext()
-	}
+	once.Do(func() {
+		easy = &Engine{
+			router: router{
+				basePath:    "/",
+				isEngineNew: true,
+			},
+		}
+		easy.router.engine = easy
+		easy.ctxPool.New = func() any {
+			return easy.newContext()
+		}
+	})
 
 	return easy
 }
